@@ -4,7 +4,6 @@ import site from './site';
 import oauth2 from './oauth2';
 import user from './user';
 import client from './client';
-import util from 'util';
 
 import path from 'path';
 import bodyParser from 'body-parser';
@@ -16,11 +15,12 @@ const log = debug('app');
 const warn = debug('app:warn');
 
 const app = express();
-app.set('views', path.join(__dirname, '/views'));
-app.set('view engine', 'ejs');
-
+app.use(errorhandler({ dumpExceptions: true, showStack: true }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+app.set('views', path.join(__dirname, '/views'));
+app.set('view engine', 'ejs');
 
 app.use(session({
     secret: 'keyboard cat',
@@ -28,6 +28,7 @@ app.use(session({
     saveUninitialized: false,
 }));
 /*
+ import util from 'util';
  app.use(function(req, res, next) {
  console.log('-- session --');
  console.dir(req.session);
@@ -38,7 +39,6 @@ app.use(session({
  */
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(errorhandler({ dumpExceptions: true, showStack: true }));
 
 require('./auth');
 
