@@ -1,30 +1,25 @@
-/**
- * Module dependencies.
- */
-var express = require('express')
-    , passport = require('passport')
-    , site = require('./site')
-    , oauth2 = require('./oauth2')
-    , user = require('./user')
-    , client = require('./client')
-    , util = require('util');
+import express from 'express';
+import passport from 'passport';
+import site from './site';
+import oauth2 from './oauth2';
+import user from './user';
+import client from './client';
+import util from 'util';
 
-var bodyParser = require('body-parser');
-var session = require('express-session');
-var errorhandler = require('errorhandler');
+import path from 'path';
+import bodyParser from 'body-parser';
+import session from 'express-session';
+import errorhandler from 'errorhandler';
 
-var log = require('debug')('app');
-var warn = require('debug')('app:warn');
+import debug from 'debug';
+const log = debug('app');
+const warn = debug('app:warn');
 
-// Express configuration
-
-var app = express();
+const app = express();
+app.set('views', path.join(__dirname, '/views'));
 app.set('view engine', 'ejs');
 
-// parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
-
-// parse application/json
 app.use(bodyParser.json());
 
 app.use(session({
@@ -45,8 +40,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(errorhandler({ dumpExceptions: true, showStack: true }));
 
-// Passport configuration
-
 require('./auth');
 
 app.get('/', site.index);
@@ -62,4 +55,5 @@ app.post('/oauth/token', oauth2.token);
 app.get('/api/userinfo', user.info);
 app.get('/api/clientinfo', client.info);
 
-app.listen(3000);
+app.set('port', process.env.PORT || 3000);
+app.listen(app.get('port'), () => log(process.env.npm_package_name + ' PROVIDER listening on port ' + app.get('port')));

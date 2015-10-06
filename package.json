@@ -4,12 +4,14 @@
   "description": "OpenID Connect w/ Implicit flow and Session management",
   "main": "index.js",
   "scripts": {
-    "start": "DEBUG=app,app:* node ./server.js",
+    "start-provider": "DEBUG=app,app:* node ./provider.js",
+    "start-consumer": "DEBUG=app,app:* node ./consumer.js",
     "lint": "eslint ./"
   },
   "author": "Marco Bettiolo <marco@bettiolo.it>",
   "license": "ISC",
   "dependencies": {
+    "babel": "^5.8.23",
     "body-parser": "^1.14.1",
     "connect-ensure-login": "^0.1.1",
     "debug": "^2.2.0",
