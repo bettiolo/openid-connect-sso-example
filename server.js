@@ -10,7 +10,6 @@ var express = require('express')
     , util = require('util');
 
 var bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser');
 var session = require('express-session');
 var errorhandler = require('errorhandler');
 
@@ -21,7 +20,6 @@ var warn = require('debug')('app:warn');
 
 var app = express();
 app.set('view engine', 'ejs');
-app.use(cookieParser());
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -29,7 +27,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.use(session({ secret: 'keyboard cat' }));
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: false,
+}));
 /*
  app.use(function(req, res, next) {
  console.log('-- session --');
