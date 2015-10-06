@@ -19,12 +19,15 @@
     "errorhandler": "^1.4.2",
     "express": "^4.13.3",
     "express-session": "^1.11.3",
+    "jade": "^1.11.0",
     "oauth2orize-openid": "0.0.1",
     "passport": "^0.3.0",
     "passport-http": "^0.3.0",
     "passport-http-bearer": "^1.0.1",
     "passport-local": "^1.0.0",
-    "passport-oauth2-client-password": "^0.1.2"
+    "passport-oauth2-client-password": "^0.1.2",
+    "passport-openidconnect": "0.0.1",
+    "request": "^2.64.0"
   },
   "devDependencies": {
     "babel-eslint": "^4.1.3",
