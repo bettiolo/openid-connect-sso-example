@@ -10,8 +10,3 @@ exports.save = function(code, clientID, redirectURI, userID, done) {
     codes[code] = { clientID: clientID, redirectURI: redirectURI, userID: userID };
     return done(null);
 };
-
-exports.delete = function(key, done) {
-    delete codes[key];
-    return done(null);
-}

@@ -6,7 +6,9 @@ var express = require('express')
     , site = require('./site')
     , oauth2 = require('./oauth2')
     , user = require('./user')
+    , client = require('./client')
     , util = require('util');
+
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
@@ -56,5 +58,6 @@ app.post('/dialog/authorize/decision', oauth2.decision);
 app.post('/oauth/token', oauth2.token);
 
 app.get('/api/userinfo', user.info);
+app.get('/api/clientinfo', client.info);
 
 app.listen(3000);
