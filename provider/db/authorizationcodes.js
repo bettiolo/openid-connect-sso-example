@@ -1,6 +1,5 @@
 var codes = {};
 
-
 exports.find = function(key, done) {
     var code = codes[key];
     return done(null, code);
