@@ -21,4 +21,17 @@ export default {
     login.ensureLoggedIn(),
     (req, res) => res.render('account', { user: req.user }),
   ],
+
+  // user decision endpoint
+  //
+  // `decision` middleware processes a user's decision to allow or deny access
+  // requested by a client application.  Based on the grant type requested by the
+  // client, the above grant middleware configured above will be invoked to send
+  // a response.
+  decision(server) {
+    return [
+      login.ensureLoggedIn(),
+      server.decision(),
+    ];
+  },
 };

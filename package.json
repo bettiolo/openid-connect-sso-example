@@ -4,7 +4,7 @@
   "description": "OpenID Connect w/ Implicit flow and Session management",
   "main": "index.js",
   "scripts": {
-    "start-provider": "DEBUG=app,app:* nodemon -e js,ejs --watch provider/ ./provider.js",
+    "start-provider": "DEBUG=oauth2orize,app,app:* nodemon -e js,ejs --watch provider/ ./provider.js",
     "start-consumer": "DEBUG=app,app:* nodemon -e js,ejs --watch consumer/ ./consumer.js",
     "lint": "eslint ./"
   },
