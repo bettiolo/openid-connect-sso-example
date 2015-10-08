@@ -1,38 +1,41 @@
-/**
- * Module dependencies.
- */
-var oauth2orize = require('oauth2orize')
-    , oauth2orize_ext = require('oauth2orize-openid') // require extentions.
-    , passport = require('passport')
-    , login = require('connect-ensure-login')
-    , db = require('./db')
-    , utils = require('./utils');
+import oauth2orize from 'oauth2orize';
+import oauth2orizeOpenId from 'oauth2orize-openid';
+import passport from 'passport';
+import login from 'connect-ensure-login';
+import db from './db';
+import utils from './utils';
+
+import codeGrant from './grants/code-grant.js';
+import tokenGrant from './grants/token-grant.js';
+import idTokenGrant from './grants/id-token-grant.js';
+import idTokenTokenGrant from './grants/id-token-token-grant.js';
+
+import codeExchange from './exchanges/code-exchange.js';
+import passwordExchange from './exchanges/password-exchange.js';
 
 // create OAuth 2.0 server
 var server = oauth2orize.createServer();
 
-// Register serialialization and deserialization functions.
+// Register serialization and deserialization functions.
 //
 // When a client redirects a user to user authorization endpoint, an
-// authorization transaction is initiated.  To complete the transaction, the
-// user must authenticate and approve the authorization request.  Because this
+// authorization transaction is initiated. To complete the transaction, the
+// user must authenticate and approve the authorization request. Because this
 // may involve multiple HTTP request/response exchanges, the transaction is
 // stored in the session.
 //
 // An application must supply serialization functions, which determine how the
-// client object is serialized into the session.  Typically this will be a
+// client object is serialized into the session. Typically this will be a
 // simple matter of serializing the client's ID, and deserializing by finding
 // the client by ID from the database.
 
-server.serializeClient(function(client, done) {
-    return done(null, client.id);
-});
+server.serializeClient((client, done) => done(null, client.id));
 
-server.deserializeClient(function(id, done) {
-    db.clients.find(id, function(err, client) {
-        if (err) { return done(err); }
-        return done(null, client);
-    });
+server.deserializeClient((id, done) => {
+  db.clients.find(id, (err, client) => {
+    if (err) { return done(err); }
+    return done(null, client);
+  });
 });
 
 // Register supported OpenID Connect 1.0 grant types.
@@ -40,90 +43,69 @@ server.deserializeClient(function(id, done) {
 // Implicit Flow
 
 // id_token grant type.
-server.grant(oauth2orize_ext.grant.idToken(function(client, user, done){
-    var id_token;
-    // Do your lookup/token generation.
-    // ... id_token =
-
-    done(null, id_token);
-}));
+server.grant(idTokenGrant);
 
 // 'id_token token' grant type.
-server.grant(oauth2orize_ext.grant.idTokenToken(
-    function(client, user, done){
-        var token;
-        // Do your lookup/token generation.
-        // ... token =
-
-        done(null, token);
-    },
-    function(client, user, done){
-        var id_token;
-        // Do your lookup/token generation.
-        // ... id_token =
-        done(null, id_token);
-    }
-));
+server.grant(idTokenTokenGrant);
 
 // Hybrid Flow
 
 // 'code id_token' grant type.
-server.grant(oauth2orize_ext.grant.codeIdToken(
-    function(client, redirect_uri, user, done){
-        var code;
-        // Do your lookup/token generation.
-        // ... code =
+server.grant(oauth2orizeOpenId.grant.codeIdToken(
+  function (client, redirect_uri, user, done) {
+    var code;
+    // Do your lookup/token generation.
+    // ... code =
 
-        done(null, code);
-    },
-    function(client, user, done){
-        var id_token;
-        // Do your lookup/token generation.
-        // ... id_token =
-        done(null, id_token);
-    }
+    done(null, code);
+  },
+  function (client, user, done) {
+    var id_token;
+    // Do your lookup/token generation.
+    // ... id_token =
+    done(null, id_token);
+  }
 ));
 
 // 'code token' grant type.
-server.grant(oauth2orize_ext.grant.codeToken(
-    function(client, user, done){
-        var token;
-        // Do your lookup/token generation.
-        // ... id_token =
-        done(null, token);
-    },
-    function(client, redirect_uri, user, done){
-        var code;
-        // Do your lookup/token generation.
-        // ... code =
+server.grant(oauth2orizeOpenId.grant.codeToken(
+  function (client, user, done) {
+    var token;
+    // Do your lookup/token generation.
+    // ... id_token =
+    done(null, token);
+  },
+  function (client, redirect_uri, user, done) {
+    var code;
+    // Do your lookup/token generation.
+    // ... code =
 
-        done(null, code);
-    }
+    done(null, code);
+  }
 ));
 
 // 'code id_token token' grant type.
-server.grant(oauth2orize_ext.grant.codeIdTokenToken(
-    function(client, user, done){
-        var token;
-        // Do your lookup/token generation.
-        // ... id_token =
-        done(null, token);
-    },
-    function(client, redirect_uri, user, done){
-        var code;
-        // Do your lookup/token generation.
-        // ... code =
+server.grant(oauth2orizeOpenId.grant.codeIdTokenToken(
+  function (client, user, done) {
+    var token;
+    // Do your lookup/token generation.
+    // ... id_token =
+    done(null, token);
+  },
+  function (client, redirect_uri, user, done) {
+    var code;
+    // Do your lookup/token generation.
+    // ... code =
 
-        done(null, code);
-    },
-    function(client, user, done){
-        var id_token;
-        // Do your lookup/token generation.
-        // ... id_token =
-        done(null, id_token);
-    }
+    done(null, code);
+  },
+  function (client, user, done) {
+    var id_token;
+    // Do your lookup/token generation.
+    // ... id_token =
+    done(null, id_token);
+  }
 ));
-
 
 
 // Register supported Oauth 2.0 grant types.
@@ -133,115 +115,45 @@ server.grant(oauth2orize_ext.grant.codeIdTokenToken(
 // through a process of the user granting access, and the client exchanging
 // the grant for an access token.
 
-// Grant authorization codes.  The callback takes the `client` requesting
-// authorization, the `redirectURI` (which is used as a verifier in the
-// subsequent exchange), the authenticated `user` granting access, and
-// their response, which contains approved scope, duration, etc. as parsed by
-// the application.  The application issues a code, which is bound to these
-// values, and will be exchanged for an access token.
+server.grant(codeGrant);
+server.grant(tokenGrant);
 
-server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, done) {
-    var code = utils.uid(16)
-
-    db.authorizationCodes.save(code, client.id, redirectURI, user.id, function(err) {
-        if (err) { return done(err); }
-        done(null, code);
-    });
-}));
-
-// Grant implicit authorization.  The callback takes the `client` requesting
-// authorization, the authenticated `user` granting access, and
-// their response, which contains approved scope, duration, etc. as parsed by
-// the application.  The application issues a token, which is bound to these
-// values.
-
-server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
-    var token = utils.uid(256);
-
-    db.accessTokens.save(token, user.id, client.clientId, function(err) {
-        if (err) { return done(err); }
-        done(null, token);
-    });
-}));
-
-// Exchange authorization codes for access tokens.  The callback accepts the
-// `client`, which is exchanging `code` and any `redirectURI` from the
-// authorization request for verification.  If these values are validated, the
-// application issues an access token on behalf of the user who authorized the
-// code.
-
-server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, done) {
-    db.authorizationCodes.find(code, function(err, authCode) {
-        if (err) { return done(err); }
-        if (client.id !== authCode.clientID) { return done(null, false); }
-        if (redirectURI !== authCode.redirectURI) { return done(null, false); }
-
-        var token = utils.uid(256)
-        db.accessTokens.save(token, authCode.userID, authCode.clientID, function(err) {
-            if (err) { return done(err); }
-            done(null, token);
-        });
-    });
-}));
+server.exchange(codeExchange);
 
 // Exchange user id and password for access tokens.  The callback accepts the
 // `client`, which is exchanging the user's name and password from the
 // authorization request for verification. If these values are validated, the
 // application issues an access token on behalf of the user who authorized the code.
 
-server.exchange(oauth2orize.exchange.password(function(client, username, password, scope, done) {
-
-    //Validate the client
-    db.clients.findByClientId(client.clientId, function(err, localClient) {
-        if (err) { return done(err); }
-        if(localClient === null) {
-            return done(null, false);
-        }
-        if(localClient.clientSecret !== client.clientSecret) {
-            return done(null, false);
-        }
-        //Validate the user
-        db.users.findByUsername(username, function(err, user) {
-            if (err) { return done(err); }
-            if(user === null) {
-                return done(null, false);
-            }
-            if(password !== user.password) {
-                return done(null, false);
-            }
-            //Everything validated, return the token
-            var token = utils.uid(256);
-            db.accessTokens.save(token, user.id, client.clientId, function(err) {
-                if (err) { return done(err); }
-                done(null, token);
-            });
-        });
-    });
-}));
+server.exchange(passwordExchange);
 
 // Exchange the client id and password/secret for an access token.  The callback accepts the
 // `client`, which is exchanging the client's id and password/secret from the
 // authorization request for verification. If these values are validated, the
 // application issues an access token on behalf of the client who authorized the code.
 
-server.exchange(oauth2orize.exchange.clientCredentials(function(client, scope, done) {
+server.exchange(oauth2orize.exchange.clientCredentials(function (client, scope, done) {
 
-    //Validate the client
-    db.clients.findByClientId(client.clientId, function(err, localClient) {
-        if (err) { return done(err); }
-        if(localClient === null) {
-            return done(null, false);
-        }
-        if(localClient.clientSecret !== client.clientSecret) {
-            return done(null, false);
-        }
-        var token = utils.uid(256);
-        //Pass in a null for user id since there is no user with this grant type
-        db.accessTokens.save(token, null, client.clientId, function(err) {
-            if (err) { return done(err); }
-            done(null, token);
-        });
+  //Validate the client
+  db.clients.findByClientId(client.clientId, function (err, localClient) {
+    if (err) {
+      return done(err);
+    }
+    if (localClient === null) {
+      return done(null, false);
+    }
+    if (localClient.clientSecret !== client.clientSecret) {
+      return done(null, false);
+    }
+    var token = utils.uid(256);
+    //Pass in a null for user id since there is no user with this grant type
+    db.accessTokens.save(token, null, client.clientId, function (err) {
+      if (err) {
+        return done(err);
+      }
+      done(null, token);
     });
+  });
 }));
 
 // user authorization endpoint
@@ -258,23 +170,25 @@ server.exchange(oauth2orize.exchange.clientCredentials(function(client, scope, d
 // the application's responsibility to authenticate the user and render a dialog
 // to obtain their approval (displaying details about the client requesting
 // authorization).  We accomplish that here by routing through `ensureLoggedIn()`
-// first, and rendering the `dialog` view. 
+// first, and rendering the `dialog` view.
 
 exports.authorization = [
-    login.ensureLoggedIn(),
-    server.authorization(function(clientID, redirectURI, done) {
-        db.clients.findByClientId(clientID, function(err, client) {
-            if (err) { return done(err); }
-            // WARNING: For security purposes, it is highly advisable to check that
-            //          redirectURI provided by the client matches one registered with
-            //          the server.  For simplicity, this example does not.  You have
-            //          been warned.
-            return done(null, client, redirectURI);
-        });
-    }),
-    function(req, res){
-        res.render('dialog', { transactionID: req.oauth2.transactionID, user: req.user, client: req.oauth2.client });
-    }
+  login.ensureLoggedIn(),
+  server.authorization(function (clientID, redirectURI, done) {
+    db.clients.findByClientId(clientID, function (err, client) {
+      if (err) {
+        return done(err);
+      }
+      // WARNING: For security purposes, it is highly advisable to check that
+      //          redirectURI provided by the client matches one registered with
+      //          the server.  For simplicity, this example does not.  You have
+      //          been warned.
+      return done(null, client, redirectURI);
+    });
+  }),
+  function (req, res) {
+    res.render('dialog', {transactionID: req.oauth2.transactionID, user: req.user, client: req.oauth2.client});
+  }
 ]
 
 // user decision endpoint
@@ -285,9 +199,9 @@ exports.authorization = [
 // a response.
 
 exports.decision = [
-    login.ensureLoggedIn(),
-    server.decision()
-]
+  login.ensureLoggedIn(),
+  server.decision(),
+];
 
 
 // token endpoint
@@ -298,7 +212,7 @@ exports.decision = [
 // authenticate when making requests to this endpoint.
 
 exports.token = [
-    passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
-    server.token(),
-    server.errorHandler()
-]
+  passport.authenticate(['basic', 'oauth2-client-password'], {session: false}),
+  server.token(),
+  server.errorHandler(),
+];
