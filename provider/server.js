@@ -1,7 +1,10 @@
 import express from 'express';
 import passport from 'passport';
+import oauth2orize from 'oauth2orize';
+
+import api from './api';
 import site from './site';
-import oauth2 from './oauth2';
+import openidConnect from './openid-connect';
 import user from './user';
 import client from './client';
 
@@ -12,7 +15,6 @@ import errorhandler from 'errorhandler';
 
 import debug from 'debug';
 const log = debug('app');
-const warn = debug('app:warn');
 
 const app = express();
 app.use(errorhandler({ dumpExceptions: true, showStack: true }));
@@ -23,9 +25,9 @@ app.set('views', path.join(__dirname, '/views'));
 app.set('view engine', 'ejs');
 
 app.use(session({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: false,
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: false,
 }));
 /*
  import util from 'util';
@@ -40,7 +42,10 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-require('./auth');
+const server = oauth2orize.createServer();
+openidConnect(server);
+
+import './auth';
 
 app.get('/', site.index);
 app.get('/login', site.loginForm);
@@ -48,9 +53,9 @@ app.post('/login', site.login);
 app.get('/logout', site.logout);
 app.get('/account', site.account);
 
-app.get('/dialog/authorize', oauth2.authorization);
-app.post('/dialog/authorize/decision', oauth2.decision);
-app.post('/oauth/token', oauth2.token);
+app.get('/dialog/authorize', api.authorization(server));
+app.post('/dialog/authorize/decision', api.decision(server));
+app.post('/oauth/token', api.token(server));
 
 app.get('/api/userinfo', user.info);
 app.get('/api/clientinfo', client.info);

@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import errorhandler from 'errorhandler';
-
 import debug from 'debug';
 const log = debug('app');
 

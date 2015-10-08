@@ -51,7 +51,7 @@ function userInfoRequest(userInfoEndpoint, accessToken, cb) {
 export default (authorizationCode, cb) => {
   tokenRequest(
     'http://localhost:3000/oauth/token',
-    'abc123', 'ssh-secret',
+    'abc123', 'secret1',
     'http://localhost:3001/cb',
     authorizationCode,
     (tokenRequestErr, accessToken) => {

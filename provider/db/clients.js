@@ -1,25 +1,26 @@
-var clients = [
-    { id: '1', name: 'Samplr', clientId: 'abc123', clientSecret: 'ssh-secret' },
-    { id: '2', name: 'Samplr2', clientId: 'xyz123', clientSecret: 'ssh-password' }
+const clients = [
+    { id: '1', name: 'Example App', clientId: 'abc123', clientSecret: 'secret1' },
+    { id: '2', name: 'Example App 2', clientId: 'xyz123', clientSecret: 'secret2' },
 ];
 
-
-exports.find = function(id, done) {
-    for (var i = 0, len = clients.length; i < len; i++) {
-        var client = clients[i];
-        if (client.id === id) {
-            return done(null, client);
-        }
+export default {
+  find: (id, cb) => {
+    for (let i = 0, len = clients.length; i < len; i++) {
+      const client = clients[i];
+      if (client.id === id) {
+        return cb(null, client);
+      }
     }
-    return done(null, null);
-};
+    return cb(null, null);
+  },
 
-exports.findByClientId = function(clientId, done) {
-    for (var i = 0, len = clients.length; i < len; i++) {
-        var client = clients[i];
-        if (client.clientId === clientId) {
-            return done(null, client);
-        }
+  findByClientId: (clientId, cb) => {
+    for (let i = 0, len = clients.length; i < len; i++) {
+      const client = clients[i];
+      if (client.clientId === clientId) {
+        return cb(null, client);
+      }
     }
-    return done(null, null);
+    return cb(null, null);
+  },
 };
