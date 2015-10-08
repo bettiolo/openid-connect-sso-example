@@ -2,6 +2,11 @@ import oauth2orize from 'oauth2orize';
 import db from '../db';
 import utils from '../utils';
 
+// Exchange user id and password for access tokens. The callback accepts the
+// `client`, which is exchanging the user's name and password from the
+// authorization request for verification. If these values are validated, the
+// application issues an access token on behalf of the user who authorized the code.
+
 export default oauth2orize.exchange.password((client, username, password, scope, done) => {
   // Validate the client
   db.clients.findByClientId(client.clientId, (findByClientIdErr, localClient) => {

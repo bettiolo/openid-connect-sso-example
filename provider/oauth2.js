@@ -12,6 +12,7 @@ import idTokenTokenGrant from './grants/id-token-token-grant.js';
 
 import codeExchange from './exchanges/code-exchange.js';
 import passwordExchange from './exchanges/password-exchange.js';
+import clientCredentialsExchange from './exchanges/client-credentials-exchange.js';
 
 // create OAuth 2.0 server
 var server = oauth2orize.createServer();
@@ -119,42 +120,8 @@ server.grant(codeGrant);
 server.grant(tokenGrant);
 
 server.exchange(codeExchange);
-
-// Exchange user id and password for access tokens.  The callback accepts the
-// `client`, which is exchanging the user's name and password from the
-// authorization request for verification. If these values are validated, the
-// application issues an access token on behalf of the user who authorized the code.
-
 server.exchange(passwordExchange);
-
-// Exchange the client id and password/secret for an access token.  The callback accepts the
-// `client`, which is exchanging the client's id and password/secret from the
-// authorization request for verification. If these values are validated, the
-// application issues an access token on behalf of the client who authorized the code.
-
-server.exchange(oauth2orize.exchange.clientCredentials(function (client, scope, done) {
-
-  //Validate the client
-  db.clients.findByClientId(client.clientId, function (err, localClient) {
-    if (err) {
-      return done(err);
-    }
-    if (localClient === null) {
-      return done(null, false);
-    }
-    if (localClient.clientSecret !== client.clientSecret) {
-      return done(null, false);
-    }
-    var token = utils.uid(256);
-    //Pass in a null for user id since there is no user with this grant type
-    db.accessTokens.save(token, null, client.clientId, function (err) {
-      if (err) {
-        return done(err);
-      }
-      done(null, token);
-    });
-  });
-}));
+server.exchange(clientCredentialsExchange);
 
 // user authorization endpoint
 //
