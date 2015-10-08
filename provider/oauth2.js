@@ -1,21 +1,21 @@
 import oauth2orize from 'oauth2orize';
-import oauth2orizeOpenId from 'oauth2orize-openid';
 import passport from 'passport';
 import login from 'connect-ensure-login';
 import db from './db';
-import utils from './utils';
 
 import codeGrant from './grants/code-grant.js';
 import tokenGrant from './grants/token-grant.js';
 import idTokenGrant from './grants/id-token-grant.js';
 import idTokenTokenGrant from './grants/id-token-token-grant.js';
+import codeIdTokenGrant from './grants/code-id-token-grant';
+import codeTokenGrant from './grants/code-token-grant';
+import codeIdTokenTokenGrant from './grants/code-id-token-token-grant';
 
 import codeExchange from './exchanges/code-exchange.js';
 import passwordExchange from './exchanges/password-exchange.js';
 import clientCredentialsExchange from './exchanges/client-credentials-exchange.js';
 
-// create OAuth 2.0 server
-var server = oauth2orize.createServer();
+const server = oauth2orize.createServer();
 
 // Register serialization and deserialization functions.
 //
@@ -42,72 +42,13 @@ server.deserializeClient((id, done) => {
 // Register supported OpenID Connect 1.0 grant types.
 
 // Implicit Flow
-
-// id_token grant type.
 server.grant(idTokenGrant);
-
-// 'id_token token' grant type.
 server.grant(idTokenTokenGrant);
 
 // Hybrid Flow
-
-// 'code id_token' grant type.
-server.grant(oauth2orizeOpenId.grant.codeIdToken(
-  function (client, redirect_uri, user, done) {
-    var code;
-    // Do your lookup/token generation.
-    // ... code =
-
-    done(null, code);
-  },
-  function (client, user, done) {
-    var id_token;
-    // Do your lookup/token generation.
-    // ... id_token =
-    done(null, id_token);
-  }
-));
-
-// 'code token' grant type.
-server.grant(oauth2orizeOpenId.grant.codeToken(
-  function (client, user, done) {
-    var token;
-    // Do your lookup/token generation.
-    // ... id_token =
-    done(null, token);
-  },
-  function (client, redirect_uri, user, done) {
-    var code;
-    // Do your lookup/token generation.
-    // ... code =
-
-    done(null, code);
-  }
-));
-
-// 'code id_token token' grant type.
-server.grant(oauth2orizeOpenId.grant.codeIdTokenToken(
-  function (client, user, done) {
-    var token;
-    // Do your lookup/token generation.
-    // ... id_token =
-    done(null, token);
-  },
-  function (client, redirect_uri, user, done) {
-    var code;
-    // Do your lookup/token generation.
-    // ... code =
-
-    done(null, code);
-  },
-  function (client, user, done) {
-    var id_token;
-    // Do your lookup/token generation.
-    // ... id_token =
-    done(null, id_token);
-  }
-));
-
+server.grant(codeIdTokenGrant);
+server.grant(codeTokenGrant);
+server.grant(codeIdTokenTokenGrant);
 
 // Register supported Oauth 2.0 grant types.
 //
@@ -169,7 +110,6 @@ exports.decision = [
   login.ensureLoggedIn(),
   server.decision(),
 ];
-
 
 // token endpoint
 //

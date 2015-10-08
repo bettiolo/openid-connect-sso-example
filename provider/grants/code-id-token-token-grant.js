@@ -1,14 +1,20 @@
 import oauth2orizeOpenId from 'oauth2orize-openid';
 
-// 'id_token token' grant type.
+// 'code id_token token' grant type.
 
-export default oauth2orizeOpenId.grant.idTokenToken(
+export default oauth2orizeOpenId.grant.codeIdTokenToken(
   (client, user, done) => {
     var token;
     // Do your lookup/token generation.
-    // ... token =
-
+    // ... id_token =
     done(null, token);
+  },
+  (client, redirect_uri, user, done) => {
+    var code;
+    // Do your lookup/token generation.
+    // ... code =
+
+    done(null, code);
   },
   (client, user, done) => {
     var id_token;
