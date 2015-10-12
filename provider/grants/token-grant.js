@@ -8,12 +8,12 @@ import utils from '../utils';
 // the application.  The application issues a token, which is bound to these
 // values.
 
-export default oauth2orize.grant.token((client, user, ares, done) => {
+export default oauth2orize.grant.token((client, user, ares, cb) => {
   const token = utils.uid(256);
 
   db.accessTokens.save(token, user.id, client.clientId, (err) => {
-    if (err) { return done(err); }
+    if (err) { return cb(err); }
 
-    done(null, token);
+    cb(null, token);
   });
 });

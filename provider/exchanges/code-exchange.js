@@ -8,22 +8,22 @@ import utils from '../utils';
 // application issues an access token on behalf of the user who authorized the
 // code.
 
-export default oauth2orize.exchange.code((client, code, redirectURI, done) => {
+export default oauth2orize.exchange.code((client, code, redirectURI, cb) => {
   db.authorizationCodes.find(code, (authorizationCodeErr, authCode) => {
-    if (authorizationCodeErr) { return done(authorizationCodeErr); }
+    if (authorizationCodeErr) { return cb(authorizationCodeErr); }
 
     if (client.id !== authCode.clientID) {
-      return done(null, false);
+      return cb(null, false);
     }
     if (redirectURI !== authCode.redirectURI) {
-      return done(null, false);
+      return cb(null, false);
     }
 
     const token = utils.uid(256);
     db.accessTokens.save(token, authCode.userID, authCode.clientID, (accessTokenErr) => {
-      if (accessTokenErr) { return done(accessTokenErr); }
+      if (accessTokenErr) { return cb(accessTokenErr); }
 
-      done(null, token);
+      cb(null, token);
     });
   });
 });

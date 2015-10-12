@@ -1,13 +1,29 @@
+<h2>Local Provider</h2>
+
 <p>
-  <a
-    href="http://localhost:3000/dialog/authorize?response_type=code&scope=openid&client_id=abc123&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fcb">
+  <a href="<%= localAuthorizationCodeFlowHref%>">
     Login with OpenID Connect Provider using Authorisation Code flow
   </a>
 </p>
 
 <p>
   <a
-    href="http://localhost:3000/dialog/authorize?response_type=id_token%20token&scope=openid&client_id=abc123&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fcb&nonce=n-0S6_WzA2Mj">
+    href="">
+    Login with OpenID Connect Provider using Implicit flow
+  </a>
+</p>
+
+<h2>Google</h2>
+
+<p>
+  <a href="<%= googleAuthorizationCodeFlowHref%>">
+    Login with OpenID Connect Provider using Authorisation Code flow
+  </a>
+</p>
+
+<p>
+  <a
+    href="">
     Login with OpenID Connect Provider using Implicit flow
   </a>
 </p>

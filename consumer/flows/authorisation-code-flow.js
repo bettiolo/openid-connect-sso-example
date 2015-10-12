@@ -2,10 +2,10 @@ import request from 'request';
 import debug from 'debug';
 const log = debug('app:authorisation-code-flow');
 
-function tokenRequest(tokenRequestEndpoint, clientId, clientSecret, redirectUri, authorizationCode, cb) {
-  // Requesting http://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
+function tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode, cb) {
+  // Implementing http://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
   const tokenRequestOptions = {
-    uri: tokenRequestEndpoint,
+    uri: tokenEndpoint,
     method: 'POST',
     form: {
       client_id: clientId,
@@ -27,42 +27,37 @@ function tokenRequest(tokenRequestEndpoint, clientId, clientSecret, redirectUri,
   });
 }
 
-function userInfoRequest(userInfoEndpoint, accessToken, cb) {
-  // Requesting http://openid.net/specs/openid-connect-core-1_0.html#UserInfo
-  const userInfoRequestOptions = {
-    uri: userInfoEndpoint,
+function userinfoRequest(userinfoEndpoint, accessToken, cb) {
+  // Implementing http://openid.net/specs/openid-connect-core-1_0.html#UserInfo
+  const userinfoRequestOptions = {
+    uri: userinfoEndpoint,
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
     },
   };
-  request(userInfoRequestOptions, (err, res, body) => {
+  request(userinfoRequestOptions, (err, res, body) => {
     if (err) return cb(err);
     if (res.statusCode !== 200) {
       return cb(new Error(body));
     }
     log('UserInfo response', body);
 
-    const userInfoClaims = JSON.parse(body);
-    cb(null, userInfoClaims);
+    const userinfoClaims = JSON.parse(body);
+    cb(null, userinfoClaims);
   });
 }
 
-export default (authorizationCode, cb) => {
-  tokenRequest(
-    'http://localhost:3000/oauth/token',
-    'abc123', 'secret1',
-    'http://localhost:3001/cb',
-    authorizationCode,
+export default (tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode, userinfoEndpoint, cb) => {
+  tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode,
     (tokenRequestErr, accessToken) => {
       if (tokenRequestErr) return cb(tokenRequestErr);
 
-      userInfoRequest(
-        'http://localhost:3000/api/userinfo',
-        accessToken, (userInfoRequestErr, userInfoClaims) => {
-          if (userInfoRequestErr) return cb(userInfoRequestErr);
+      userinfoRequest(userinfoEndpoint, accessToken,
+        (userinfoRequestErr, userinfoClaims) => {
+          if (userinfoRequestErr) return cb(userinfoRequestErr);
 
-          cb(null, userInfoClaims);
+          cb(null, userinfoClaims);
         });
     });
 };
