@@ -1,9 +1,10 @@
 import request from 'request';
 import debug from 'debug';
 import jwt from 'jsonwebtoken';
+import jwk from '../lib/jwk';
 const log = debug('app:authorisation-code-flow');
 
-function tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode, cb) {
+function tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode, jwks, cb) {
   // Implementing http://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
   const tokenRequestOptions = {
     uri: tokenEndpoint,
@@ -15,18 +16,31 @@ function tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, author
       redirect_uri: redirectUri,
       grant_type: 'authorization_code',
     },
+    json: true,
   };
-  request(tokenRequestOptions, (err, res, body) => {
+  request(tokenRequestOptions, (err, res, tokenResponse) => {
     if (err) return cb(err);
     if (res.statusCode !== 200) {
-      return cb(new Error(body));
+      return cb(new Error(tokenResponse));
     }
-    log('Token response', body);
+    // TODO: Check errors in WWW-Authenticate header
 
-    const parsedBody = JSON.parse(body);
-    const accessToken = parsedBody.access_token;
-    const idToken = jwt.decode(parsedBody.id_token);
-    cb(null, accessToken, idToken);
+    log('Token response', tokenResponse);
+    const accessToken = tokenResponse.access_token;
+    const completeIdToken = jwt.decode(tokenResponse.id_token, { complete: true });
+
+    log('Complete JWT ID Token', completeIdToken);
+    const pem = jwk.getPem(jwks, completeIdToken.header.kid);
+    log('PEM', pem);
+
+    // TODO: Specify algorithm?
+    jwt.verify(tokenResponse.id_token, pem, (jwtErr, validatedIdToken) => {
+      if (jwtErr) return cb(jwtErr);
+      if (!validatedIdToken) { return cb(new Error('JWT ID Token validation failed')); }
+
+      log('JWT ID Token valid', validatedIdToken);
+      cb(null, accessToken, validatedIdToken);
+    });
   });
 }
 
@@ -38,29 +52,30 @@ function userinfoRequest(userinfoEndpoint, accessToken, cb) {
     headers: {
       'Authorization': `Bearer ${accessToken}`,
     },
+    json: true,
   };
-  request(userinfoRequestOptions, (err, res, body) => {
+  request(userinfoRequestOptions, (err, res, userinfoResponse) => {
     if (err) return cb(err);
     if (res.statusCode !== 200) {
-      return cb(new Error(body));
+      return cb(new Error(userinfoResponse));
     }
-    log('UserInfo response', body);
+    // TODO: Check errors in WWW-Authenticate header
 
-    const userinfoClaims = JSON.parse(body);
-    cb(null, userinfoClaims);
+    log('UserInfo response', userinfoResponse);
+    cb(null, userinfoResponse);
   });
 }
 
-export default (tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode, userinfoEndpoint, cb) => {
-  tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode,
+export default (tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode, userinfoEndpoint, jwks, cb) => {
+  tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode, jwks,
     (tokenRequestErr, accessToken, idToken) => {
       if (tokenRequestErr) return cb(tokenRequestErr);
 
       userinfoRequest(userinfoEndpoint, accessToken,
-        (userinfoRequestErr, userinfoClaims) => {
+        (userinfoRequestErr, userinfoResponse) => {
           if (userinfoRequestErr) return cb(userinfoRequestErr);
 
-          cb(null, userinfoClaims, idToken);
+          cb(null, userinfoResponse, idToken);
         });
     });
 };

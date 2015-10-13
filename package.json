@@ -30,7 +30,8 @@
     "passport-local": "^1.0.0",
     "passport-oauth2-client-password": "^0.1.2",
     "passport-openidconnect": "0.0.1",
-    "request": "^2.64.0"
+    "request": "^2.64.0",
+    "rsa-pem-from-mod-exp": "^0.8.4"
   },
   "devDependencies": {
     "babel-eslint": "^4.1.3",

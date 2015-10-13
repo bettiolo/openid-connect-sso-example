@@ -54,8 +54,8 @@ app.post('/login', site.login);
 app.get('/logout', site.logout);
 app.get('/account', site.account);
 
-app.post('/dialog/authorize/decision', site.decision(server));
-app.get('/dialog/authorize', authorizationEndpoint(server));
+app.post('/dialog/auth/decision', site.decision(server));
+app.get('/dialog/auth', authorizationEndpoint(server));
 app.post('/oauth/token', tokenEndpoint(server));
 app.get('/api/userinfo', userinfoEndpoint);
 app.get('/api/clientinfo', clientinfoEndpoint);
