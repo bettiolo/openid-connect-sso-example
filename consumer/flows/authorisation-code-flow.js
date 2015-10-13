@@ -1,5 +1,6 @@
 import request from 'request';
 import debug from 'debug';
+import jwt from 'jsonwebtoken';
 const log = debug('app:authorisation-code-flow');
 
 function tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode, cb) {
@@ -22,8 +23,10 @@ function tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, author
     }
     log('Token response', body);
 
-    const accessToken = JSON.parse(body).access_token;
-    cb(null, accessToken);
+    const parsedBody = JSON.parse(body);
+    const accessToken = parsedBody.access_token;
+    const idToken = jwt.decode(parsedBody.id_token);
+    cb(null, accessToken, idToken);
   });
 }
 
@@ -50,14 +53,14 @@ function userinfoRequest(userinfoEndpoint, accessToken, cb) {
 
 export default (tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode, userinfoEndpoint, cb) => {
   tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode,
-    (tokenRequestErr, accessToken) => {
+    (tokenRequestErr, accessToken, idToken) => {
       if (tokenRequestErr) return cb(tokenRequestErr);
 
       userinfoRequest(userinfoEndpoint, accessToken,
         (userinfoRequestErr, userinfoClaims) => {
           if (userinfoRequestErr) return cb(userinfoRequestErr);
 
-          cb(null, userinfoClaims);
+          cb(null, userinfoClaims, idToken);
         });
     });
 };

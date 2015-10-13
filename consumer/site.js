@@ -2,6 +2,10 @@ import authorisationCodeFlow from './flows/authorisation-code-flow';
 import config from './config';
 
 // Google autodiscovery config: https://accounts.google.com/.well-known/openid-configuration
+// authorization_endpoint, token_endpoint, userinfo_endpoint
+// response_types_supported
+// scopes_supported
+// jwks_uri - Keys to validate the JWT singnature
 
 const providers = {
   local: {
@@ -24,9 +28,9 @@ const providers = {
   },
 };
 
-function getAuthorizationCodeFlowHref(provider, state) {
+function getAuthorizeEndpointHref(responseType, provider, state) {
   return `${provider.authorizeEndpoint}` +
-    `?response_type=code` +
+    `?response_type=${encodeURIComponent(responseType)}` +
     `&scope=${encodeURIComponent(provider.scope)}` +
     `&client_id=${encodeURIComponent(provider.clientId)}` +
     `&redirect_uri=${encodeURIComponent(provider.redirectUri)}` +
@@ -37,12 +41,14 @@ function getAuthorizationCodeFlowHref(provider, state) {
 export default {
   index(req, res) {
     const state = '';
-    const localAuthorizationCodeFlowHref = getAuthorizationCodeFlowHref(providers.local, state);
-    const googleAuthorizationCodeFlowHref = getAuthorizationCodeFlowHref(providers.google, state);
+    const localAuthorizationCodeFlowHref = getAuthorizeEndpointHref('code', providers.local, state);
+    const googleAuthorizationCodeFlowHref = getAuthorizeEndpointHref('code', providers.google, state);
+    const googleImplicitFlowHref = getAuthorizeEndpointHref('id_token token', providers.google, state);
 
     res.render('index', {
       localAuthorizationCodeFlowHref,
       googleAuthorizationCodeFlowHref,
+      googleImplicitFlowHref,
     });
   },
 
@@ -56,12 +62,13 @@ export default {
       provider.redirectUri,
       authorizationCode,
       provider.userinfoEndpoint,
-      (err, userinfoClaims) => {
+      (err, userinfoClaims, idToken) => {
         if (err) return next(err);
 
         res.render('cb', {
           err,
           userinfoClaims: JSON.stringify(userinfoClaims, null, 2),
+          idToken: JSON.stringify(idToken, null, 2),
         });
       });
   },

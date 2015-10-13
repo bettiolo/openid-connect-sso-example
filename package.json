@@ -21,6 +21,7 @@
     "express": "^4.13.3",
     "express-session": "^1.11.3",
     "jade": "^1.11.0",
+    "jsonwebtoken": "^5.4.0",
     "oauth2orize-openid": "0.0.1",
     "passport": "^0.3.0",
     "passport-http": "^0.3.0",
