@@ -1,3 +1,4 @@
+import uuid from 'node-uuid';
 import authorisationCodeFlow from './flows/authorisation-code-flow';
 import config from './config';
 
@@ -35,7 +36,8 @@ function getAuthorizeEndpointHref(responseType, provider, state) {
     `&client_id=${encodeURIComponent(provider.clientId)}` +
     `&redirect_uri=${encodeURIComponent(provider.redirectUri)}` +
     `&state=${encodeURIComponent(state)}` +
-    `&display=page`;
+    `&display=page` +
+    `&nonce=${encodeURIComponent(uuid.v4())}`;
 }
 
 export default {
