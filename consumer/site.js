@@ -35,9 +35,9 @@ function getAuthorizeEndpointHref(responseType, provider, state) {
     `&scope=${encodeURIComponent(provider.scope)}` +
     `&client_id=${encodeURIComponent(provider.clientId)}` +
     `&redirect_uri=${encodeURIComponent(provider.redirectUri)}` +
-    `&state=${encodeURIComponent(state)}` +
+    `&state=${encodeURIComponent(state)}` + // Should be checked server side to match the session / CSRF protection
     `&display=page` +
-    `&nonce=${encodeURIComponent(uuid.v4())}`;
+    `&nonce=${encodeURIComponent(uuid.v4())}`; // Required only for Implicit Flow
 }
 
 export default {
