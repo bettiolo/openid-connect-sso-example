@@ -5,7 +5,7 @@ const log = debug('app:openid-configuration');
 const autodiscoveryEndpoints = {
   google: 'https://accounts.google.com/.well-known/openid-configuration',
   microsoft: 'https://login.windows.net/common/.well-known/openid-configuration',
-  salesforce: 'https://login.windows.net/common/.well-known/openid-configuration',
+  salesforce: 'https://login.salesforce.com/.well-known/openid-configuration',
 };
 
 const configCache = {};
