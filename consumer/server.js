@@ -14,7 +14,7 @@ app.use(errorhandler());
 app.set('views', path.join(__dirname, '/views'));
 app.set('view engine', 'ejs');
 
-openidConfig.getGoogle((err, googleOpenidConfig) => {
+openidConfig.getByIdentityProvider('google', (err, googleOpenidConfig) => {
   if (err) { throw err; }
 
   const googleJwks = jwks(googleOpenidConfig.jwks_uri);

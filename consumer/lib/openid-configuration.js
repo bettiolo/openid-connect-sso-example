@@ -4,36 +4,47 @@ import debug from 'debug';
 const log = debug('app:openid-configuration');
 
 const autodiscoveryEndpoints = {
-  google: 'https://accounts.google.com/.well-known/openid-configuration',
-  microsoft: 'https://login.windows.net/common/.well-known/openid-configuration',
-  salesforce: 'https://login.salesforce.com/.well-known/openid-configuration',
+  google: {
+    issuer: 'accounts.google.com',
+    prefix: '',
+  },
+  microsoft: {
+    issuer: 'login.windows.net',
+    prefix: 'common/',
+  },
+  salesforce: {
+    issuer: 'login.salesforce.com',
+    prefix: '',
+  },
 };
 
 const configCache = {};
 
-function getOpenidConfig(autodiscoveryEndpoint, cb) {
+function getOpenidConfig(issuer, prefix, cb) {
+  const autodiscoveryEndpoint = `https://${issuer}${prefix || ''}/.well-known/openid-configuration`;
+  log('GET', 'Issuer:', issuer, autodiscoveryEndpoint);
   request.get({ url: autodiscoveryEndpoint, json: true }, (err, res, openidConfig) => cb(err, openidConfig));
 }
 
 export default {
-  get(provider, cb) {
-    if (configCache[provider]) {
-      log('Cache HIT', 'Provider:', provider);
+  get(issuer, prefix, cb) {
+    if (configCache[issuer]) {
+      log('Cache HIT', 'Issuer:', issuer);
 
-      return cb(null, configCache[provider]);
+      return cb(null, configCache[issuer]);
     }
 
-    log('Cache MISS', 'Provider:', provider);
-    getOpenidConfig(autodiscoveryEndpoints[provider], (openidConfigErr, openidConfig) => {
+    log('Cache MISS', 'Issuer:', issuer);
+    getOpenidConfig(issuer, prefix, (openidConfigErr, openidConfig) => {
       if (openidConfigErr) { return cb(openidConfigErr); }
 
-      log('OpenID Config', 'Provider:', provider, openidConfig);
-      configCache[provider] = openidConfig;
-      cb(null, configCache[provider]);
+      log('OpenID Config', 'Issuer:', issuer, openidConfig);
+      configCache[issuer] = openidConfig;
+      cb(null, configCache[issuer]);
     });
   },
-
-  getGoogle(cb) {
-    this.get('google', cb);
+  getByIdentityProvider(provider, cb) {
+    const { issuer, suffix } = autodiscoveryEndpoints[provider];
+    this.get(issuer, suffix, cb);
   },
 };
