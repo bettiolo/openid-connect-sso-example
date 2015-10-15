@@ -1,7 +1,6 @@
 import request from 'request';
 import debug from 'debug';
 import jwt from 'jsonwebtoken';
-import jwk from '../lib/jwk';
 const log = debug('app:authorisation-code-flow');
 
 function tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, authorizationCode, jwks, cb) {
@@ -30,16 +29,18 @@ function tokenRequest(tokenEndpoint, clientId, clientSecret, redirectUri, author
     const completeIdToken = jwt.decode(tokenResponse.id_token, { complete: true });
 
     log('Complete JWT ID Token', completeIdToken);
-    const pem = jwk.getPem(jwks, completeIdToken.header.kid);
-    log('PEM', pem);
+    jwks.getPem(completeIdToken.header.kid, (pemErr, pem) => {
+      if (pemErr) return cb(pemErr);
 
-    // TODO: Specify algorithm?
-    jwt.verify(tokenResponse.id_token, pem, (jwtErr, validatedIdToken) => {
-      if (jwtErr) return cb(jwtErr);
-      if (!validatedIdToken) { return cb(new Error('JWT ID Token validation failed')); }
+      log('PEM', pem);
+      // TODO: Specify algorithm?
+      jwt.verify(tokenResponse.id_token, pem, (jwtErr, validatedIdToken) => {
+        if (jwtErr) return cb(jwtErr);
+        if (!validatedIdToken) { return cb(new Error('JWT ID Token validation failed')); }
 
-      log('JWT ID Token valid', validatedIdToken);
-      cb(null, accessToken, validatedIdToken);
+        log('JWT ID Token valid', validatedIdToken);
+        cb(null, accessToken, validatedIdToken);
+      });
     });
   });
 }

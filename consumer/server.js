@@ -5,6 +5,7 @@ import debug from 'debug';
 const log = debug('app');
 
 import openidConfig from './lib/openid-configuration';
+import jwks from './lib/jwks';
 import site from './site';
 
 const app = express();
@@ -13,9 +14,10 @@ app.use(errorhandler());
 app.set('views', path.join(__dirname, '/views'));
 app.set('view engine', 'ejs');
 
-openidConfig.getGoogle((err, googleOpenidConfig, googleJwks) => {
+openidConfig.getGoogle((err, googleOpenidConfig) => {
   if (err) { throw err; }
 
+  const googleJwks = jwks(googleOpenidConfig.jwks_uri);
   const { index, cb } = site(googleOpenidConfig, googleJwks);
   app.get('/', index);
   app.get('/cb', cb);

@@ -1,5 +1,6 @@
 import request from 'request';
 import debug from 'debug';
+
 const log = debug('app:openid-configuration');
 
 const autodiscoveryEndpoints = {
@@ -9,14 +10,9 @@ const autodiscoveryEndpoints = {
 };
 
 const configCache = {};
-const jwksCache = {};
 
 function getOpenidConfig(autodiscoveryEndpoint, cb) {
   request.get({ url: autodiscoveryEndpoint, json: true }, (err, res, openidConfig) => cb(err, openidConfig));
-}
-
-function getJwks(jwksUri, cb) {
-  request.get({ url: jwksUri, json: true }, (err, res, jwks) => cb(err, jwks));
 }
 
 export default {
@@ -32,15 +28,8 @@ export default {
       if (openidConfigErr) { return cb(openidConfigErr); }
 
       log('OpenID Config', 'Provider:', provider, openidConfig);
-      getJwks(openidConfig.jwks_uri, (jwksErr, jwks) => {
-        if (jwksErr) { return cb(jwksErr); }
-
-        log('JWKS', 'Provider:', provider, jwks);
-        configCache[provider] = openidConfig;
-        jwksCache[provider] = jwks.keys;
-
-        cb(null, openidConfig, jwks.keys);
-      });
+      configCache[provider] = openidConfig;
+      cb(null, configCache[provider]);
     });
   },
 

@@ -35,7 +35,6 @@ export default (googleOpenidConfig, googleJwks) => {
       authorization_endpoint: googleOpenidConfig.authorization_endpoint,
       token_endpoint: googleOpenidConfig.token_endpoint,
       userinfo_endpoint: googleOpenidConfig.userinfo_endpoint,
-      jwks_uri: googleOpenidConfig.jwks_uri,
       scope: 'openid profile email',
       clientId: config.GOOGLE_CLIENT_ID,
       clientSecret: config.GOOGLE_CLIENT_SECRET,
