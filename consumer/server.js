@@ -4,7 +4,8 @@ import errorhandler from 'errorhandler';
 import debug from 'debug';
 const log = debug('app');
 
-import openidConfig from './lib/openid-configuration';
+import config from './config';
+import opConfig from './lib/openid-provider-config';
 import jwks from './lib/jwks';
 import site from './site';
 
@@ -14,13 +15,28 @@ app.use(errorhandler());
 app.set('views', path.join(__dirname, '/views'));
 app.set('view engine', 'ejs');
 
-openidConfig.getByIdentityProvider('google', (err, googleOpenidConfig) => {
-  if (err) { throw err; }
+const openIdProviders = {};
+opConfig.getByName('google', (googleOpErr, googleOpConfig) => {
+  if (googleOpErr) { throw googleOpErr; }
 
-  const googleJwks = jwks(googleOpenidConfig.jwks_uri);
-  const { index, cb } = site(googleOpenidConfig, googleJwks);
-  app.get('/', index);
-  app.get('/cb', cb);
+  openIdProviders.google = {
+    config: googleOpConfig,
+    jwks: jwks(googleOpConfig.jwks_uri),
+  };
+
+  const localIssuer = config.relayingParty.local.issuer;
+  opConfig.get(localIssuer, (localOpErr, localOpConfig) => {
+    if (localOpErr) { throw localOpErr; }
+
+    openIdProviders.local = {
+      config: localOpConfig,
+      jwks: jwks(localOpConfig.jwks_uri),
+    };
+
+    const { index, cb } = site(openIdProviders);
+    app.get('/', index);
+    app.get('/cb', cb);
+  });
 });
 
 app.set('port', process.env.PORT || 3001);

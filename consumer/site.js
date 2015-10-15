@@ -5,12 +5,12 @@ import authorisationCodeFlow from './flows/authorisation-code-flow';
 
 const log = debug('app:site');
 
-function getAuthorizationEndpointHref(responseType, provider, state, nonce) {
-  let authorizationEndpointHref = `${provider.authorization_endpoint}` +
+function getAuthorizationEndpointHref(responseType, rpConfig, opConfig, state, nonce) {
+  let authorizationEndpointHref = `${opConfig.authorization_endpoint}` +
     `?response_type=${encodeURIComponent(responseType)}` +
-    `&scope=${encodeURIComponent(provider.scope)}` +
-    `&client_id=${encodeURIComponent(provider.clientId)}` +
-    `&redirect_uri=${encodeURIComponent(provider.redirectUri)}` +
+    `&scope=${encodeURIComponent(rpConfig.scope)}` +
+    `&client_id=${encodeURIComponent(rpConfig.clientId)}` +
+    `&redirect_uri=${encodeURIComponent(rpConfig.redirectUri)}` +
     `&state=${encodeURIComponent(state)}` + // Should be checked server side to match the session / CSRF protection
     `&display=page`;
   if (nonce) {
@@ -20,37 +20,17 @@ function getAuthorizationEndpointHref(responseType, provider, state, nonce) {
   return authorizationEndpointHref;
 }
 
-export default (googleOpenidConfig, googleJwks) => {
-  const providers = {
-    local: {
-      authorization_endpoint: 'http://localhost:3000/dialog/auth',
-      token_endpoint: 'http://localhost:3000/oauth/token',
-      userinfo_endpoint: 'http://localhost:3000/api/userinfo',
-      scope: 'openid',
-      clientId: 'abc123',
-      clientSecret: 'secret1',
-      redirectUri: 'http://localhost:3001/cb',
-    },
-    google: {
-      authorization_endpoint: googleOpenidConfig.authorization_endpoint,
-      token_endpoint: googleOpenidConfig.token_endpoint,
-      userinfo_endpoint: googleOpenidConfig.userinfo_endpoint,
-      scope: 'openid profile email',
-      clientId: config.GOOGLE_CLIENT_ID,
-      clientSecret: config.GOOGLE_CLIENT_SECRET,
-      redirectUri: 'http://localhost:3001/cb?provider=google',
-      jwks: googleJwks,
-    },
-  };
-
-  log('Providers', providers);
-
+export default (openidProviders) => {
+  log('OpenID Providers', openidProviders);
   return {
     index(req, res) {
       const state = '';
-      const localAuthorizationCodeFlowHref = getAuthorizationEndpointHref('code', providers.local, state);
-      const googleAuthorizationCodeFlowHref = getAuthorizationEndpointHref('code', providers.google, state);
-      const googleImplicitFlowHref = getAuthorizationEndpointHref('token id_token', providers.google, state, uuid.v4());
+      const localAuthorizationCodeFlowHref =
+        getAuthorizationEndpointHref('code', config.relayingParty.local, openidProviders.local.config, state);
+      const googleAuthorizationCodeFlowHref =
+        getAuthorizationEndpointHref('code', config.relayingParty.google, openidProviders.google.config, state);
+      const googleImplicitFlowHref =
+        getAuthorizationEndpointHref('token id_token', config.relayingParty.google, openidProviders.google.config, state, uuid.v4());
 
       res.render('index', {
         localAuthorizationCodeFlowHref,
@@ -60,16 +40,18 @@ export default (googleOpenidConfig, googleJwks) => {
     },
 
     cb(req, res, next) {
-      const provider = providers[req.query.provider || 'local'];
+      const providerName = [req.query.provider || 'local'];
+      const rpConfig = config.relayingParty[providerName];
+      const op = openidProviders[providerName];
       const authorizationCode = req.query.code;
       authorisationCodeFlow(
-        provider.token_endpoint,
-        provider.clientId,
-        provider.clientSecret,
-        provider.redirectUri,
+        op.config.token_endpoint,
+        rpConfig.clientId,
+        rpConfig.clientSecret,
+        rpConfig.redirectUri,
         authorizationCode,
-        provider.userinfo_endpoint,
-        provider.jwks,
+        op.config.userinfo_endpoint,
+        op.jwks,
         (err, userinfoClaims, idToken) => {
           if (err) return next(err);
 

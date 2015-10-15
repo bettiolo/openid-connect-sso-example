@@ -3,31 +3,22 @@ import debug from 'debug';
 
 const log = debug('app:openid-configuration');
 
-const autodiscoveryEndpoints = {
-  google: {
-    issuer: 'accounts.google.com',
-    prefix: '',
-  },
-  microsoft: {
-    issuer: 'login.windows.net',
-    prefix: 'common/',
-  },
-  salesforce: {
-    issuer: 'login.salesforce.com',
-    prefix: '',
-  },
+const issuers = {
+  google: 'https://accounts.google.com',
+  microsoft: 'https://login.windows.net/common',
+  salesforce: 'https://login.salesforce.com',
 };
 
 const configCache = {};
 
-function getOpenidConfig(issuer, prefix, cb) {
-  const autodiscoveryEndpoint = `https://${issuer}${prefix || ''}/.well-known/openid-configuration`;
+function getOpenidConfig(issuer, cb) {
+  const autodiscoveryEndpoint = `${issuer}/.well-known/openid-configuration`;
   log('GET', 'Issuer:', issuer, autodiscoveryEndpoint);
   request.get({ url: autodiscoveryEndpoint, json: true }, (err, res, openidConfig) => cb(err, openidConfig));
 }
 
 export default {
-  get(issuer, prefix, cb) {
+  get(issuer, cb) {
     if (configCache[issuer]) {
       log('Cache HIT', 'Issuer:', issuer);
 
@@ -35,7 +26,7 @@ export default {
     }
 
     log('Cache MISS', 'Issuer:', issuer);
-    getOpenidConfig(issuer, prefix, (openidConfigErr, openidConfig) => {
+    getOpenidConfig(issuer, (openidConfigErr, openidConfig) => {
       if (openidConfigErr) { return cb(openidConfigErr); }
 
       log('OpenID Config', 'Issuer:', issuer, openidConfig);
@@ -43,8 +34,7 @@ export default {
       cb(null, configCache[issuer]);
     });
   },
-  getByIdentityProvider(provider, cb) {
-    const { issuer, suffix } = autodiscoveryEndpoints[provider];
-    this.get(issuer, suffix, cb);
+  getByName(provider, cb) {
+    this.get(issuers[provider], cb);
   },
 };

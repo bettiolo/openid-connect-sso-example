@@ -9,6 +9,19 @@ function checkAndLoadEnvironment(name) {
 }
 
 export default {
-  GOOGLE_CLIENT_ID: checkAndLoadEnvironment('GOOGLE_CLIENT_ID'),
-  GOOGLE_CLIENT_SECRET: checkAndLoadEnvironment('GOOGLE_CLIENT_SECRET'),
+  relayingParty: {
+    local: {
+      issuer: 'http://localhost:3000',
+      scope: 'openid',
+      clientId: 'abc123',
+      clientSecret: 'secret1',
+      redirectUri: 'http://localhost:3001/cb?provider=local',
+    },
+    google: {
+      scope: 'openid profile email',
+      clientId: checkAndLoadEnvironment('GOOGLE_CLIENT_ID'),
+      clientSecret: checkAndLoadEnvironment('GOOGLE_CLIENT_SECRET'),
+      redirectUri: 'http://localhost:3001/cb?provider=google',
+    },
+  },
 };
