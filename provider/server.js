@@ -4,6 +4,7 @@ import oauth2orize from 'oauth2orize';
 
 import openidConnect from './openid-connect';
 import site from './site';
+import openidConfigurationEndpoint from './endpoints/openid-configuration-endpoint';
 import authorizationEndpoint from './endpoints/authorization-endpoint.js';
 import tokenEndpoint from './endpoints/token-endpoint.js';
 import userinfoEndpoint from './endpoints/userinfo-endpoint';
@@ -54,11 +55,13 @@ app.post('/login', site.login);
 app.get('/logout', site.logout);
 app.get('/account', site.account);
 
+app.set('port', process.env.PORT || 3000);
+
+app.get('/.well-known/openid-configuration', openidConfigurationEndpoint(`localhost:${app.get('port')}`));
 app.post('/dialog/auth/decision', site.decision(server));
 app.get('/dialog/auth', authorizationEndpoint(server));
 app.post('/oauth/token', tokenEndpoint(server));
 app.get('/api/userinfo', userinfoEndpoint);
 app.get('/api/clientinfo', clientinfoEndpoint);
 
-app.set('port', process.env.PORT || 3000);
 app.listen(app.get('port'), () => log(process.env.npm_package_name + ' PROVIDER listening on port ' + app.get('port')));
