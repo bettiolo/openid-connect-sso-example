@@ -61,7 +61,7 @@ app.get('/.well-known/openid-configuration', openidConfigurationEndpoint(`localh
 app.post('/dialog/auth/decision', site.decision(server));
 app.get('/dialog/auth', authorizationEndpoint(server));
 // app.post('/oauth/token', tokenEndpoint(server));
-app.post('/oauth/token', tokenEndpoint);
+app.post('/oauth/token', tokenEndpoint(`http://localhost:${app.get('port')}`));
 app.get('/api/userinfo', userinfoEndpoint);
 app.get('/api/clientinfo', clientinfoEndpoint);
 

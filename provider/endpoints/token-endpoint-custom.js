@@ -45,11 +45,11 @@ function ensureAuthorizationCodeValid(code, clientId, redirectUri, cb) {
     // TODO: Verify that the Authorization Code used was issued in response to an OpenID Connect Authentication Request
     //   (so that an ID Token will be returned from the Token Endpoint).
 
-    cb(null, true);
+    cb(null, true, codeMetadata.userID);
   });
 }
 
-function createIdToken(issuer, userId, clientId, cb) {
+function createIdToken(issuer, userId, clientId) {
   // Implements http://openid.net/specs/openid-connect-core-1_0.html#IDToken
   // OpenID Connect Core 1.0:  2.  ID Token
 
@@ -63,27 +63,39 @@ function createIdToken(issuer, userId, clientId, cb) {
   //  - iss REQUIRED. Issuer Identifier for the Issuer of the response. The iss value is a case sensitive URL
   //        using the https scheme that contains scheme, host, and optionally, port number and path components
   //        and no query or fragment components.
+  const iss = issuer;
+
   //  - sub REQUIRED. Subject Identifier. A locally unique and never reassigned identifier within the Issuer
   //        for the End-User, which is intended to be consumed by the Client, e.g., 24400320 or
   //        AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4. It MUST NOT exceed 255 ASCII characters in length. The
   //        sub value is a case sensitive string.
+  const sub = userId;
+
   //  - aud REQUIRED. Audience(s) that this ID Token is intended for. It MUST contain the OAuth 2.0 client_id
   //        of the Relying Party as an audience value. It MAY also contain identifiers for other audiences.
   //        In the general case, the aud value is an array of case sensitive strings. In the common special
   //       case when there is one audience, the aud value MAY be a single case sensitive string.
+  const aud = clientId;
+
   //  - exp REQUIRED. Expiration time on or after which the ID Token MUST NOT be accepted for processing.
   //        The processing of this parameter requires that the current date/time MUST be before the expiration
   //        date/time listed in the value. Implementers MAY provide for some small leeway, usually no more than
   //        a few minutes, to account for clock skew. Its value is a JSON number representing the number of
   //        seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time. See RFC 3339 [RFC3339]
   //        for details regarding date/times in general and UTC in particular.
+  const exp = new Date(Date.now() + 5 * 60000); // 5 minutes leeway
+
   //  - iat REQUIRED. Time at which the JWT was issued. Its value is a JSON number representing the number
   //        of seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time.
+  const iat = Date.now();
+
   //  - auth_time Time when the End-User authentication occurred. Its value is a JSON number representing
   //        the number of seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time. When a
   //        max_age request is made or when auth_time is requested as an Essential Claim, then this Claim
   //        is REQUIRED; otherwise, its inclusion is OPTIONAL. (The auth_time Claim semantically corresponds
   //        to the OpenID 2.0 PAPE [OpenID.PAPE] auth_time response parameter.)
+
+
   //  - nonce String value used to associate a Client session with an ID Token, and to mitigate replay attacks.
   //        The value is passed through unmodified from the Authentication Request to the ID Token. If present
   //        in the ID Token, Clients MUST verify that the nonce Claim Value is equal to the value of the nonce
@@ -91,6 +103,7 @@ function createIdToken(issuer, userId, clientId, cb) {
   //        Authorization Servers MUST include a nonce Claim in the ID Token with the Claim Value being the
   //        nonce value sent in the Authentication Request. Authorization Servers SHOULD perform no other
   //        processing on nonce values used. The nonce value is a case sensitive string.
+
   //  - acr OPTIONAL. Authentication Context Class Reference. String specifying an Authentication Context
   //        Class Reference value that identifies the Authentication Context Class that the authentication
   //        performed satisfied. The value "0" indicates the End-User authentication did not meet the
@@ -102,18 +115,20 @@ function createIdToken(issuer, userId, clientId, cb) {
   //        be used with a different meaning than that which is registered. Parties using this claim will
   //        need to agree upon the meanings of the values used, which may be context-specific. The acr value
   //        is a case sensitive string.
+
   //  - amr OPTIONAL. Authentication Methods References. JSON array of strings that are identifiers for
   //        authentication methods used in the authentication. For instance, values might indicate that
   //        both password and OTP authentication methods were used. The definition of particular values to
   //        be used in the amr Claim is beyond the scope of this specification. Parties using this claim
   //        will need to agree upon the meanings of the values used, which may be context-specific. The
   //        amr value is an array of case sensitive strings.
+
   //  - azp OPTIONAL. Authorized party - the party to which the ID Token was issued. If present, it MUST
   //        contain the OAuth 2.0 Client ID of this party. This Claim is only needed when the ID Token
   //        has a single audience value and that audience is different than the authorized party. It MAY
   //        be included even when the authorized party is the same as the sole audience. The azp value is a
   //        case sensitive string containing a StringOrURI value.
-  //
+
   // ID Tokens MAY contain other Claims. Any Claims used that are not understood MUST be ignored.
   // See Sections 3.1.3.6, 3.3.2.11, 5.1, and 7.4 for additional Claims defined by this specification.
   //
@@ -128,9 +143,17 @@ function createIdToken(issuer, userId, clientId, cb) {
   // ID Tokens SHOULD NOT use the JWS or JWE x5u, x5c, jku, or jwk Header Parameter fields. Instead,
   // references to keys used are communicated in advance using Discovery and Registration parameters,
   // per Section 10.
+
+  return {
+    iss,
+    sub,
+    aud,
+    exp,
+    iat,
+  };
 }
 
-function createTokenRespone(cb) {
+function createTokenRespone(idToken, cb) {
   // Implements http://openid.net/specs/openid-connect-core-1_0.html#TokenResponse
   // OpenID Connect Core 1.0:  3.1.3.3.  Successful Token Response
   // ... the Authorization Server returns a successful response that includes an ID Token and an Access Token. The
@@ -138,7 +161,7 @@ function createTokenRespone(cb) {
 
   // In addition to the response parameters specified by OAuth 2.0, the following parameters MUST be included in the
   //   response: id_token - ID Token value associated with the authenticated session.
-  const id_token = '';
+  const id_token = idToken;
 
   // Implements https://tools.ietf.org/html/rfc6749#section-4.1.4
   // OAuth 2.0:  4.1.4.  Access Token Response
@@ -184,7 +207,7 @@ function createTokenRespone(cb) {
   // TODO: [..] The authorization server SHOULD document the size of any value it issues.
 }
 
-export default (req, res, next) => {
+export default (issuer) => (req, res, next) => {
   const { code, client_id, client_secret, redirect_uri, grant_type } = req.body;
 
   // Implements http://openid.net/specs/openid-connect-core-1_0.html#TokenRequestValidation
@@ -193,14 +216,15 @@ export default (req, res, next) => {
     if (clientCredentialsErr) { return next(clientCredentialsErr); }
     if (!clientCredentialsValid) { return next(generateError('Client credentials invalid')); }
 
-    ensureAuthorizationCodeValid(code, client_id, redirect_uri, (authorizationCodeErr, authorizationCodeValid) => {
+    ensureAuthorizationCodeValid(code, client_id, redirect_uri, (authorizationCodeErr, authorizationCodeValid, userId) => {
       if (authorizationCodeErr) { return next(authorizationCodeErr); }
       if (!authorizationCodeValid) { return next(generateError('Authorization Code invalid')); }
 
       // Implements http://openid.net/specs/openid-connect-core-1_0.html#TokenResponse
       // OpenID Connect Core 1.0:  3.1.3.3.  Successful Token Response
       // After receiving and validating a valid and authorized Token Request from the Client...
-      createTokenRespone((err, tokenResponse) => {
+      const idToken = createIdToken(issuer, userId, client_id);
+      createTokenRespone(idToken, (err, tokenResponse) => {
         // Implements https://tools.ietf.org/html/rfc6749#section-5.1
         // OAuth 2.0:  5.1.  Successful Response
         // The authorization server issues an access token and optional refresh
