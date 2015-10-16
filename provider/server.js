@@ -6,7 +6,7 @@ import openidConnect from './openid-connect';
 import site from './site';
 import openidConfigurationEndpoint from './endpoints/openid-configuration-endpoint';
 import authorizationEndpoint from './endpoints/authorization-endpoint.js';
-import tokenEndpoint from './endpoints/token-endpoint.js';
+import tokenEndpoint from './endpoints/token-endpoint-custom.js';
 import userinfoEndpoint from './endpoints/userinfo-endpoint';
 import clientinfoEndpoint from './endpoints/clientinfo-endpoint';
 
@@ -60,7 +60,8 @@ app.set('port', process.env.PORT || 3000);
 app.get('/.well-known/openid-configuration', openidConfigurationEndpoint(`localhost:${app.get('port')}`));
 app.post('/dialog/auth/decision', site.decision(server));
 app.get('/dialog/auth', authorizationEndpoint(server));
-app.post('/oauth/token', tokenEndpoint(server));
+// app.post('/oauth/token', tokenEndpoint(server));
+app.post('/oauth/token', tokenEndpoint);
 app.get('/api/userinfo', userinfoEndpoint);
 app.get('/api/clientinfo', clientinfoEndpoint);
 
