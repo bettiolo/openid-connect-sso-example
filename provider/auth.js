@@ -85,8 +85,8 @@ passport.use(new BearerStrategy(
             if (err) { return done(err); }
             if (!token) { return done(null, false); }
 
-            if(token.userID != null) {
-                db.users.find(token.userID, function(err, user) {
+            if(token.userId != null) {
+                db.users.find(token.userId, function(err, user) {
                     if (err) { return done(err); }
                     if (!user) { return done(null, false); }
                     // to keep this example simple, restricted scopes are not implemented,
@@ -97,7 +97,7 @@ passport.use(new BearerStrategy(
             } else {
                 //The request came from a client only since userID is null
                 //therefore the client is passed back instead of a user
-                db.clients.findByClientId(token.clientID, function(err, client) {
+                db.clients.findByClientId(token.clientId, function(err, client) {
                     if(err) { return done(err); }
                     if(!client) { return done(null, false); }
                     // to keep this example simple, restricted scopes are not implemented,

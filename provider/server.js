@@ -5,8 +5,10 @@ import oauth2orize from 'oauth2orize';
 import openidConnect from './openid-connect';
 import site from './site';
 import openidConfigurationEndpoint from './endpoints/openid-configuration-endpoint';
-import authorizationEndpoint from './endpoints/authorization-endpoint.js';
-import tokenEndpoint from './endpoints/token-endpoint-custom.js';
+import jwksEndpoint from './endpoints/jwks-endpoint';
+import privateJwks from './private-jwks';
+import authorizationEndpoint from './endpoints/authorization-endpoint';
+import tokenEndpoint from './endpoints/token-endpoint-custom';
 import userinfoEndpoint from './endpoints/userinfo-endpoint';
 import clientinfoEndpoint from './endpoints/clientinfo-endpoint';
 
@@ -58,6 +60,7 @@ app.get('/account', site.account);
 app.set('port', process.env.PORT || 3000);
 
 app.get('/.well-known/openid-configuration', openidConfigurationEndpoint(`localhost:${app.get('port')}`));
+app.get('/oauth2/certs', jwksEndpoint(privateJwks));
 app.post('/dialog/auth/decision', site.decision(server));
 app.get('/dialog/auth', authorizationEndpoint(server));
 // app.post('/oauth/token', tokenEndpoint(server));

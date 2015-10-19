@@ -1,6 +1,6 @@
-import passport from 'passport';
 import clients from '../db/clients';
 import authorizationCodes from '../db/authorization-codes';
+import token from './token';
 
 // Implementation of http://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
 
@@ -30,22 +30,25 @@ function authenticateClientCredentials(clientId, clientSecret, cb) {
 }
 
 function ensureAuthorizationCodeValid(code, clientId, redirectUri, cb) {
+  console.log('CODE', code);
   authorizationCodes.find(code, (err, codeMetadata) => {
     if (err) { return cb(err); }
+
+    console.log('CODE METADATA', codeMetadata);
 
     // Verify that the Authorization Code is valid.
     if (!codeMetadata) { return cb(null, false); }
     // TODO: Test db that codeMetadata.code === code
     // Ensure the Authorization Code was issued to the authenticated Client.
-    if (codeMetadata.clientID !== clientId) { return cb(null, false); }
+    if (codeMetadata.clientId !== clientId) { return cb(null, false); }
     // TODO: If possible, verify that the Authorization Code has not been previously used.
     // Ensure that the redirect_uri parameter value is identical to the redirect_uri parameter value that was included
     //   in the initial Authorization Request. [...]
-    if (codeMetadata.redirectURI !== redirectUri) { return cb(null, false); }
+    if (codeMetadata.redirectUri !== redirectUri) { return cb(null, false); }
     // TODO: Verify that the Authorization Code used was issued in response to an OpenID Connect Authentication Request
     //   (so that an ID Token will be returned from the Token Endpoint).
 
-    cb(null, true, codeMetadata.userID);
+    cb(null, true, codeMetadata.userId);
   });
 }
 
@@ -95,7 +98,6 @@ function createIdToken(issuer, userId, clientId) {
   //        is REQUIRED; otherwise, its inclusion is OPTIONAL. (The auth_time Claim semantically corresponds
   //        to the OpenID 2.0 PAPE [OpenID.PAPE] auth_time response parameter.)
 
-
   //  - nonce String value used to associate a Client session with an ID Token, and to mitigate replay attacks.
   //        The value is passed through unmodified from the Authentication Request to the ID Token. If present
   //        in the ID Token, Clients MUST verify that the nonce Claim Value is equal to the value of the nonce
@@ -144,16 +146,10 @@ function createIdToken(issuer, userId, clientId) {
   // references to keys used are communicated in advance using Discovery and Registration parameters,
   // per Section 10.
 
-  return {
-    iss,
-    sub,
-    aud,
-    exp,
-    iat,
-  };
+  return { iss, sub, aud, exp, iat };
 }
 
-function createTokenRespone(idToken, cb) {
+function createTokenResponse(idToken, accessToken, cb) {
   // Implements http://openid.net/specs/openid-connect-core-1_0.html#TokenResponse
   // OpenID Connect Core 1.0:  3.1.3.3.  Successful Token Response
   // ... the Authorization Server returns a successful response that includes an ID Token and an Access Token. The
@@ -178,12 +174,12 @@ function createTokenRespone(idToken, cb) {
   // to the entity-body of the HTTP response with a 200 (OK) status code:
 
   // REQUIRED.  The access token issued by the authorization server.
-  const access_token = '';
+  const access_token = accessToken;
 
   // RECOMMENDED.  The lifetime in seconds of the access token.  For
   // example, the value "3600" denotes that the access token will
   // expire in one hour from the time the response was generated.
-  //   If omitted, the authorization server SHOULD provide the
+  // If omitted, the authorization server SHOULD provide the
   // expiration time via other means or document the default value.
   const expires_in = 3600;
 
@@ -205,6 +201,7 @@ function createTokenRespone(idToken, cb) {
   // scope
 
   // TODO: [..] The authorization server SHOULD document the size of any value it issues.
+  cb(null, { id_token, access_token, expires_in, token_type });
 }
 
 export default (issuer) => (req, res, next) => {
@@ -224,45 +221,47 @@ export default (issuer) => (req, res, next) => {
       // OpenID Connect Core 1.0:  3.1.3.3.  Successful Token Response
       // After receiving and validating a valid and authorized Token Request from the Client...
       const idToken = createIdToken(issuer, userId, client_id);
-      createTokenRespone(idToken, (err, tokenResponse) => {
-        // Implements https://tools.ietf.org/html/rfc6749#section-5.1
-        // OAuth 2.0:  5.1.  Successful Response
-        // The authorization server issues an access token and optional refresh
-        // token, and constructs the response by adding the following parameters
-        // to the entity-body of the HTTP response with a 200 (OK) status code:
-        res.statusCode = 200;
+      token.createToken(accessToken => {
+        createTokenResponse(idToken, accessToken, (err, tokenResponse) => {
+          // Implements https://tools.ietf.org/html/rfc6749#section-5.1
+          // OAuth 2.0:  5.1.  Successful Response
+          // The authorization server issues an access token and optional refresh
+          // token, and constructs the response by adding the following parameters
+          // to the entity-body of the HTTP response with a 200 (OK) status code:
+          res.statusCode = 200;
 
-        // Implements https://tools.ietf.org/html/rfc6749#section-5.1
-        // OAuth 2.0:  5.1.  Successful Response
-        // The authorization server MUST include the HTTP "Cache-Control"
-        // response header field [RFC2616] with a value of "no-store" in any
-        // response containing tokens, credentials, or other sensitive
-        // information, as well as the "Pragma" response header field [RFC2616]
-        // with a value of "no-cache".
-        //
-        // Implements http://openid.net/specs/openid-connect-core-1_0.html#TokenResponse
-        // OpenID Connect Core 1.0:  3.1.3.3.  Successful Token Response
-        // All Token Responses that contain tokens, secrets, or other sensitive information MUST include the following
-        // HTTP response header fields and values: Cache-Control: no-store, Pragma: no-cache
-        res.set({
-          'Cache-Control': 'no-store',
-          'Pragma': 'no-cache',
+          // Implements https://tools.ietf.org/html/rfc6749#section-5.1
+          // OAuth 2.0:  5.1.  Successful Response
+          // The authorization server MUST include the HTTP "Cache-Control"
+          // response header field [RFC2616] with a value of "no-store" in any
+          // response containing tokens, credentials, or other sensitive
+          // information, as well as the "Pragma" response header field [RFC2616]
+          // with a value of "no-cache".
+          //
+          // Implements http://openid.net/specs/openid-connect-core-1_0.html#TokenResponse
+          // OpenID Connect Core 1.0:  3.1.3.3.  Successful Token Response
+          // All Token Responses that contain tokens, secrets, or other sensitive information MUST include the following
+          // HTTP response header fields and values: Cache-Control: no-store, Pragma: no-cache
+          res.set({
+            'Cache-Control': 'no-store',
+            'Pragma': 'no-cache',
+          });
+
+          // Implements https://tools.ietf.org/html/rfc6749#section-5.1
+          // OAuth 2.0:  5.1.  Successful Response
+          // The parameters are included in the entity-body of the HTTP response
+          // using the "application/json" media type as defined by [RFC4627].  The
+          // parameters are serialized into a JavaScript Object Notation (JSON)
+          // structure by adding each parameter at the highest structure level.
+          // Parameter names and string values are included as JSON strings.
+          // Numerical values are included as JSON numbers. The order of
+          // parameters does not matter and can vary.
+          //
+          // Implements http://openid.net/specs/openid-connect-core-1_0.html#TokenResponse
+          // OpenID Connect Core 1.0:  3.1.3.3.  Successful Token Response
+          // The response uses the application/json media type.
+          res.json(tokenResponse);
         });
-
-        // Implements https://tools.ietf.org/html/rfc6749#section-5.1
-        // OAuth 2.0:  5.1.  Successful Response
-        // The parameters are included in the entity-body of the HTTP response
-        // using the "application/json" media type as defined by [RFC4627].  The
-        // parameters are serialized into a JavaScript Object Notation (JSON)
-        // structure by adding each parameter at the highest structure level.
-        // Parameter names and string values are included as JSON strings.
-        // Numerical values are included as JSON numbers. The order of
-        // parameters does not matter and can vary.
-        //
-        // Implements http://openid.net/specs/openid-connect-core-1_0.html#TokenResponse
-        // OpenID Connect Core 1.0:  3.1.3.3.  Successful Token Response
-        // The response uses the application/json media type.
-        res.json(tokenResponse);
       });
     });
   });

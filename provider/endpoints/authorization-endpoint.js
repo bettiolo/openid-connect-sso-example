@@ -21,20 +21,20 @@ import db from '../db';
 
 export default (server) => [
   login.ensureLoggedIn(),
-  server.authorization((clientID, redirectURI, cb) => {
-    db.clients.findByClientId(clientID, (err, client) => {
+  server.authorization((clientId, redirectUri, cb) => {
+    db.clients.findByClientId(clientId, (err, client) => {
       if (err) {
         return cb(err);
       }
 
       // WARNING: For security purposes, it is highly advisable to check that
-      //          redirectURI provided by the client matches one registered with
+      //          redirectUri provided by the client matches one registered with
       //          the server. For simplicity, this example does not. You have
       //          been warned.
-      return cb(null, client, redirectURI);
+      return cb(null, client, redirectUri);
     });
   }),
   (req, res) => {
-    res.render('dialog', {transactionID: req.oauth2.transactionID, user: req.user, client: req.oauth2.client});
+    res.render('dialog', { transactionID: req.oauth2.transactionID, user: req.user, client: req.oauth2.client });
   },
 ];

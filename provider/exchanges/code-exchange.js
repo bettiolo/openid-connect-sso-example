@@ -12,15 +12,15 @@ export default oauth2orize.exchange.code((client, code, redirectURI, cb) => {
   db.authorizationCodes.find(code, (authorizationCodeErr, authCode) => {
     if (authorizationCodeErr) { return cb(authorizationCodeErr); }
 
-    if (client.id !== authCode.clientID) {
+    if (client.clientId !== authCode.clientId) {
       return cb(null, false);
     }
-    if (redirectURI !== authCode.redirectURI) {
+    if (redirectURI !== authCode.redirectUri) {
       return cb(null, false);
     }
 
     const token = utils.uid(256);
-    db.accessTokens.save(token, authCode.userID, authCode.clientID, (accessTokenErr) => {
+    db.accessTokens.save(token, authCode.userId, authCode.clientId, (accessTokenErr) => {
       if (accessTokenErr) { return cb(accessTokenErr); }
 
       cb(null, token);

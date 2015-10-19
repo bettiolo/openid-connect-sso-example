@@ -26,12 +26,11 @@ export default (server) => {
   // simple matter of serializing the client's ID, and deserializing by finding
   // the client by ID from the database.
 
-  server.serializeClient((client, done) => done(null, client.id));
-  server.deserializeClient((id, done) => {
-    db.clients.find(id, (err, client) => {
-      if (err) {
-        return done(err);
-      }
+  server.serializeClient((client, done) => done(null, client.clientId));
+  server.deserializeClient((clientId, done) => {
+    db.clients.findByClientId(clientId, (err, client) => {
+      if (err) { return done(err); }
+
       return done(null, client);
     });
   });

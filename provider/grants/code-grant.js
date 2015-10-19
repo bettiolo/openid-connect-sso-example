@@ -12,7 +12,7 @@ import utils from '../utils';
 export default oauth2orize.grant.code((client, redirectURI, user, ares, done) => {
   const code = utils.uid(16);
 
-  db.authorizationCodes.save(code, client.id, redirectURI, user.id, (err) => {
+  db.authorizationCodes.save(code, client.clientId, redirectURI, user.id, (err) => {
     if (err) { return done(err); }
 
     done(null, code);
