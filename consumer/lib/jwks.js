@@ -10,7 +10,7 @@ let jwksCache = null; // TODO: jwksCache TTL should respect HTTP cache headers
 function getJwks(jwksUri, cb) {
   if (!jwksCache) {
     log('Cache MISS', jwksUri);
-    request.get({url: jwksUri, json: true}, (err, res, jwks) => {
+    request.get({ url: jwksUri, json: true }, (err, res, jwks) => {
       if (err) {
         logError(err);
         return cb(err);
