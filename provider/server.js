@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import express from 'express';
 import passport from 'passport';
 import oauth2orize from 'oauth2orize';
@@ -6,13 +8,11 @@ import openidConnect from './openid-connect';
 import site from './site';
 import openidConfigurationEndpoint from './endpoints/openid-configuration-endpoint';
 import jwksEndpoint from './endpoints/jwks-endpoint';
-import privateJwks from './private-jwks';
 import authorizationEndpoint from './endpoints/authorization-endpoint';
 import tokenEndpoint from './endpoints/token-endpoint-custom';
 import userinfoEndpoint from './endpoints/userinfo-endpoint';
 import clientinfoEndpoint from './endpoints/clientinfo-endpoint';
 
-import path from 'path';
 import bodyParser from 'body-parser';
 import session from 'express-session';
 import errorhandler from 'errorhandler';
@@ -49,6 +49,10 @@ app.use(passport.session());
 const server = oauth2orize.createServer();
 openidConnect(server);
 
+import privateJwks from './private-jwks';
+const privateKid = privateJwks.keys[0].kid;
+const privatePem = fs.readFileSync(path.join(__dirname, `./private-${privateKid}.pem`), 'ascii');
+log('PRIVATE PEM', privatePem);
 import './auth';
 
 app.get('/', site.index);
@@ -64,7 +68,7 @@ app.get('/oauth2/certs', jwksEndpoint(privateJwks));
 app.post('/dialog/auth/decision', site.decision(server));
 app.get('/dialog/auth', authorizationEndpoint(server));
 // app.post('/oauth/token', tokenEndpoint(server));
-app.post('/oauth/token', tokenEndpoint(`http://localhost:${app.get('port')}`));
+app.post('/oauth/token', tokenEndpoint(`http://localhost:${app.get('port')}`, privatePem, privateKid));
 app.get('/api/userinfo', userinfoEndpoint);
 app.get('/api/clientinfo', clientinfoEndpoint);
 

@@ -1,6 +1,9 @@
 import clients from '../db/clients';
 import authorizationCodes from '../db/authorization-codes';
 import token from './token';
+import jwt from 'jsonwebtoken';
+import debug from 'debug';
+const log = debug('app:token-endopoint-custom');
 
 // Implementation of http://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
 
@@ -52,7 +55,7 @@ function ensureAuthorizationCodeValid(code, clientId, redirectUri, cb) {
   });
 }
 
-function createIdToken(issuer, userId, clientId) {
+function createIdToken(issuer, userId, clientId, privatePem, kid) {
   // Implements http://openid.net/specs/openid-connect-core-1_0.html#IDToken
   // OpenID Connect Core 1.0:  2.  ID Token
 
@@ -86,11 +89,11 @@ function createIdToken(issuer, userId, clientId) {
   //        a few minutes, to account for clock skew. Its value is a JSON number representing the number of
   //        seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time. See RFC 3339 [RFC3339]
   //        for details regarding date/times in general and UTC in particular.
-  const exp = new Date(Date.now() + 5 * 60000); // 5 minutes leeway
+  const exp = '5m'; // 5 minutes leeway
 
   //  - iat REQUIRED. Time at which the JWT was issued. Its value is a JSON number representing the number
   //        of seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time.
-  const iat = Date.now();
+  // const iat = Date.now();
 
   //  - auth_time Time when the End-User authentication occurred. Its value is a JSON number representing
   //        the number of seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time. When a
@@ -146,7 +149,20 @@ function createIdToken(issuer, userId, clientId) {
   // references to keys used are communicated in advance using Discovery and Registration parameters,
   // per Section 10.
 
-  return { iss, sub, aud, exp, iat };
+  var idToken = jwt.sign({}, privatePem, {
+    algorithm: 'RS256',
+    expiresIn: exp,
+    audience: aud,
+    subject: sub,
+    issuer: iss,
+    headers: {
+      kid
+    }
+  });
+
+  log('ID TOKEN', idToken);
+
+  return idToken;
 }
 
 function createTokenResponse(idToken, accessToken, cb) {
@@ -204,7 +220,7 @@ function createTokenResponse(idToken, accessToken, cb) {
   cb(null, { id_token, access_token, expires_in, token_type });
 }
 
-export default (issuer) => (req, res, next) => {
+export default (issuer, privatePem, kid) => (req, res, next) => {
   const { code, client_id, client_secret, redirect_uri, grant_type } = req.body;
 
   // Implements http://openid.net/specs/openid-connect-core-1_0.html#TokenRequestValidation
@@ -220,8 +236,10 @@ export default (issuer) => (req, res, next) => {
       // Implements http://openid.net/specs/openid-connect-core-1_0.html#TokenResponse
       // OpenID Connect Core 1.0:  3.1.3.3.  Successful Token Response
       // After receiving and validating a valid and authorized Token Request from the Client...
-      const idToken = createIdToken(issuer, userId, client_id);
-      token.createToken(accessToken => {
+      const idToken = createIdToken(issuer, userId, client_id, privatePem, kid);
+      token.create((accessTokenErr, accessToken) => {
+        if (accessTokenErr) { return next(accessTokenErr); }
+
         createTokenResponse(idToken, accessToken, (err, tokenResponse) => {
           // Implements https://tools.ietf.org/html/rfc6749#section-5.1
           // OAuth 2.0:  5.1.  Successful Response
