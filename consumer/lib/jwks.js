@@ -5,10 +5,10 @@ import request from 'request';
 const log = debug('app:jwks');
 const logError = debug('app:jwks:error');
 
-let jwksCache = null; // TODO: jwksCache TTL should respect HTTP cache headers
+let jwksCache = { }; // TODO: jwksCache TTL should respect HTTP cache headers
 
 function getJwks(jwksUri, cb) {
-  if (!jwksCache) {
+  if (!jwksCache[jwksUri]) {
     log('Cache MISS', jwksUri);
     request.get({ url: jwksUri, json: true }, (err, res, jwks) => {
       if (err) {
@@ -17,8 +17,8 @@ function getJwks(jwksUri, cb) {
       }
 
       log('JWKS', jwks);
-      jwksCache = jwks.keys;
-      return cb(null, jwksCache);
+      jwksCache[jwksUri] = jwks.keys;
+      return cb(null, jwksCache[jwksUri]);
     });
   } else {
     log('Cache HIT', jwksUri);
