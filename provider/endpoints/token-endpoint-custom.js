@@ -162,7 +162,6 @@ function createIdToken(issuer, userId, clientId, privatePem, kid) {
   });
 
   log('ID TOKEN', idToken);
-
   return idToken;
 }
 
