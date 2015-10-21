@@ -1,0 +1,23 @@
+{
+  "name": "openid-connect-provider",
+  "version": "0.0.1",
+  "description": "OpenID Connect Provider",
+  "author": "Marco Bettiolo <marco@bettiolo.it>",
+  "license": "ISC",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --compilers js:babel/register -R spec -b ./src/**/*.test.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^5.4.0"
+  },
+  "devDependencies": {
+    "chai": "^3.4.0",
+    "mocha": "^2.3.3",
+    "rsa-pem-from-mod-exp": "^0.8.4"
+  },
+  "keywords": [
+    "openid-connect",
+    "openid"
+  ]
+}
