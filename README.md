@@ -24,3 +24,8 @@
 - https://github.com/Reidsy/node-openid-provider
 - https://github.com/gaaiatinc/hapi-openid-connect
 - https://github.com/anvilresearch/connect
+
+## Tools:
+
+- https://mkjwk.org/
+- http://jwt.io/
