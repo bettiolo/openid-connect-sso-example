@@ -16,6 +16,7 @@
 - http://nat.sakimura.org/2012/01/20/openid-connect-nutshell/
 - http://openam.forgerock.org/openam-documentation/openam-doc-source/doc/webhelp/admin-guide/openam-openid-basic-client-profile.html
 - http://openam.forgerock.org/openam-documentation/openam-doc-source/doc/webhelp/admin-guide/openam-openid-implicit-client-profile.html
+- http://www.slideshare.net/nat_sakimura/introduction-to-openid-connect
 
 ## Libs:
 
